@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Admin</title>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #09090b;
+      --panel: rgba(24, 24, 27, 0.72);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --accent: #3b82f6;
+      --success: #10b981;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background:
+        radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 30%),
+        var(--bg);
+      padding: 24px;
+    }
+    h1 { margin: 0 0 24px; font-size: 1.8rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .stat {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .stat-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--success);
+    }
+    .stat-label { color: var(--muted); font-size: 0.95rem; }
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    button {
+      padding: 13px 18px;
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s, opacity 0.2s;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); }
+    .btn-danger { background: var(--danger); }
+    .btn-purple { background: var(--purple); }
+    .btn-muted { background: rgba(255,255,255,0.1); color: var(--text); }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; }
+    .controls button { flex: 1 1 140px; }
+    .upload-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    input[type="file"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+    }
+    .preview {
+      min-height: 80px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .preview small { color: var(--muted); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    .rank { font-weight: 700; color: var(--accent); }
+    .score { font-weight: 700; color: var(--success); }
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      transform: translateX(140%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+    .toast.show { transform: translateX(0); }
+    .empty { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div style="max-width:1200px;margin:0 auto;">
+    <h1>Admin Dashboard</h1>
+  </div>
+
+  <div class="grid">
+
+    <!-- Control Panel -->
+    <div class="card">
+      <div class="stat">
+        <div>
+          <div class="stat-label">Connected Students</div>
+          <div class="stat-value" id="connectedCount">0</div>
+        </div>
+      </div>
+
+      <div class="section-title">Question Data</div>
+      <div class="upload-row">
+        <input type="file" id="csvInput" accept=".csv" />
+        <button class="btn-muted" id="uploadBtn">Load CSV</button>
+      </div>
+
+      <div class="section-title">Game Controls</div>
+      <div class="controls">
+        <button class="btn-primary" id="nextBtn">Next Question</button>
+        <button class="btn-muted" id="leaderBtn">Show Leaderboard</button>
+        <button class="btn-danger" id="endBtn">End Game & Save to DB</button>
+        <button class="btn-purple" id="downloadBtn">Download CSV Report</button>
+        <button class="btn-muted" id="resetBtn">Reset Game</button>
+      </div>
+    </div>
+
+    <!-- Current Question Preview -->
+    <div class="card">
+      <div class="section-title">Current Question</div>
+      <div class="preview" id="questionPreview">
+        <small>No question active. Click "Next Question" to begin.</small>
+      </div>
+    </div>
+
+    <!-- Live Leaderboard -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="section-title">Live Leaderboard</div>
+      <table>
+        <thead>
+          <tr><th>Rank</th><th>Roll No</th><th>Name</th><th>Score</th></tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <tr><td colspan="4" class="empty">No students connected yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const socket = io();
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(message, type = 'info') {
+      const toast = $('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function updateCount(count) {
+      $('connectedCount').textContent = count;
+    }
+
+    function renderLeaderboard(data) {
+      const tbody = $('leaderboardBody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">No students connected yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(entry => `
+        <tr>
+          <td class="rank">#${entry.rank}</td>
+          <td>${entry.roll_no}</td>
+          <td>${entry.name}</td>
+          <td class="score">${entry.score}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPreview(payload) {
+      const q = payload.question;
+      const options = Object.entries(q.options).map(([k, v]) => `<div><strong>${k}.</strong> ${v}</div>`).join('');
+      $('questionPreview').innerHTML = `
+        <div><strong>Q${payload.index}/${payload.total}</strong> ${q.question}</div>
+        <div style="margin-top:10px;color:var(--muted);font-size:0.9rem;">${options}</div>
+        <div style="margin-top:10px;color:var(--success);font-size:0.85rem;">Correct: ${q.correct}</div>
+      `;
+    }
+
+    $('uploadBtn').addEventListener('click', async () => {
+      const input = $('csvInput');
+      if (!input.files.length) {
+        showToast('Please choose a CSV file.');
+        return;
+      }
+      const form = new FormData();
+      form.append('questions_file', input.files[0]);
+      try {
+        const res = await fetch('/upload-csv', { method: 'POST', body: form });
+        const json = await res.json();
+        if (json.success) {
+          showToast(`Loaded ${json.count} questions.`);
+          $('questionPreview').innerHTML = '<small>New CSV loaded. Click "Next Question" to begin.</small>';
+        } else {
+          showToast(json.error || 'Upload failed.');
+        }
+      } catch (e) {
+        showToast('Upload error: ' + e.message);
+      }
+    });
+
+    $('nextBtn').addEventListener('click', () => {
+      socket.emit('admin_next_question');
+    });
+
+    $('leaderBtn').addEventListener('click', () => {
+      socket.emit('admin_show_leaderboard');
+    });
+
+    $('endBtn').addEventListener('click', () => {
+      if (confirm('End the game and save results to the database?')) {
+        socket.emit('admin_end_game');
+      }
+    });
+
+    $('downloadBtn').addEventListener('click', () => {
+      window.location.href = '/download-report';
+    });
+
+    $('resetBtn').addEventListener('click', () => {
+      if (confirm('Reset all game state?')) {
+        socket.emit('admin_reset_game');
+      }
+    });
+
+    socket.on('connect', () => console.log('Admin connected'));
+    socket.on('connect_error', (err) => {
+      console.error('Admin connection error:', err);
+      showToast('Cannot connect to server. Check console.');
+    });
+    socket.on('state_sync', (state) => updateCount(state.connected_count));
+    socket.on('update_lobby', (data) => updateCount(data.count));
+    socket.on('admin_question_preview', (payload) => renderPreview(payload));
+    socket.on('show_results', (data) => renderLeaderboard(data));
+    socket.on('game_over', () => showToast('Game ended. Results saved.'));
+    socket.on('game_reset', () => {
+      showToast('Game reset.');
+      $('questionPreview').innerHTML = '<small>No question active. Click "Next Question" to begin.</small>';
+      renderLeaderboard([]);
+      updateCount(0);
+    });
+    socket.on('admin_error', (data) => showToast(data.message));
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+✅ Neon Database Initialized Successfully!
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://172.20.108.230:5001
+Press CTRL+C to quit
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&t=1782664613.3570056 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "POST /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664613.3881834 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&t=1782664613.4129221 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "POST /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664613.4217608 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&t=1782664613.4311218 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "POST /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664613.4386864 HTTP/1.1" 200 -
+🔄 Game state reset
+127.0.0.1 - - [28/Jun/2026 22:06:53] "POST /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664613.4111257 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664613.4302378 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664613.4457557 HTTP/1.1" 200 -
+Student Joined: Alice (R001)127.0.0.1 - - [28/Jun/2026 22:06:53] "POST /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC HTTP/1.1" 200 -
+Student Joined: Bob (R002)
+
+127.0.0.1 - - [28/Jun/2026 22:06:53] "POST /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664613.4732296 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664613.4681613 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664613.4710734 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664613.762435 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664613.7755501 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:53] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664613.7780814 HTTP/1.1" 200 -
+📢 Question 1 sent: What is the main purpose of email etiquette?...
+127.0.0.1 - - [28/Jun/2026 22:06:54] "POST /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664613.7826629 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664613.784512 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664613.7792358 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "POST /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664614.0563784 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664614.0543246 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664614.0610175 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "POST /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664614.3932426 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664614.3942988 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664614.3916404 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:54] "POST /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA HTTP/1.1" 200 -
+✅ Session saved to Neon DB!
+127.0.0.1 - - [28/Jun/2026 22:06:55] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664614.4578292 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:55] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664614.4566414 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:55] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664614.454957 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:56] "GET /download-report HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:56] "POST /upload-csv HTTP/1.1" 200 -
+🔄 Game state reset
+127.0.0.1 - - [28/Jun/2026 22:06:56] "POST /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:56] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664616.0004873 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:56] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664615.9875803 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:56] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664616.0088978 HTTP/1.1" 200 -
+📢 Question 1 sent: Test question?...127.0.0.1 - - [28/Jun/2026 22:06:56] "POST /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA HTTP/1.1" 200 -
+
+127.0.0.1 - - [28/Jun/2026 22:06:56] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664616.097387 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:56] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664616.1049738 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:56] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664616.1091123 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:57] "POST /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:57] "GET /socket.io/?transport=polling&EIO=4&sid=MTvThGqLB4YgrQsrAAAC&t=1782664616.5991075 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:57] "POST /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:57] "GET /socket.io/?transport=polling&EIO=4&sid=8FmEac_e5GpvWxVLAAAE&t=1782664616.6024106 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:57] "POST /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jun/2026 22:06:57] "GET /socket.io/?transport=polling&EIO=4&sid=yScL004I0deS-LcrAAAA&t=1782664616.5942235 HTTP/1.1" 200 -

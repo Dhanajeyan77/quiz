@@ -1,0 +1,48 @@
+Project Objective
+Build a real-time, Kahoot-style multiplayer quiz platform optimized for 60-200 concurrent users. The platform uses a WebSocket-based backend (Python/Flask-SocketIO) and a lightweight frontend.
+UI/UX Aesthetic Guidelines
+Theme: Modern Dark Tech.
+Styling: Deep tech black (#09090b) backgrounds, glassmorphism panels (translucent dark panels with subtle white borders and background blur), and neon accents (emerald green for success/leaderboard, electric blue for active states).
+Layout: Clean, responsive grid systems. Do not use heavy UI frameworks; keep the DOM lightweight for fast WebSocket repaints.
+Core System Flows
+1. The Student Flow (Mobile First)
+Lobby Screen: Input fields for Roll No and Full Name. A primary "Join Session" button.
+Waiting Screen: A glass panel showing a loading spinner, the text "Waiting for Admin to start...", and their current Score (starts at 0).
+Active Question Screen: Displays the question text, a visual 20-second countdown timer, and a 2x2 grid of buttons for the options.
+Answered State: Once an option is clicked, disable all buttons and show "Answer submitted. Waiting for others..."
+Final Screen: Displays "Session Complete" with their locked-in final score highlighted.
+2. The Admin Dashboard Flow (Desktop Optimized)
+Control Panel: Displays a live counter of "Connected Students."
+Data Ingestion: An <input type="file" accept=".csv"> button to dynamically load questions (currently pre-loaded with the Default JSON below).
+Game Controls: A master "Next Question" button to push the active state to all phones via WebSockets.
+Live Leaderboard: A dedicated panel that updates and sorts the top scores dynamically after every question.
+End & Report: A red "End Game & Save to DB" button, and a prominent purple "Download CSV Report" button to export the final Roll No, Name, and detailed answer matrix.
+Initial Data Payload (First Test Session)
+Pre-load the application state with the following 20 Email Etiquette questions. The first 10 are multiple-choice (Easy/Medium), and the final 10 are True/False.
+JSON
+[
+  { "id": 1, "type": "mcq", "question": "What is the main purpose of email etiquette?", "options": { "A": "To make emails longer", "B": "To communicate professionally and clearly", "C": "To use difficult words", "D": "To send more attachments" }, "correct": "B", "timeLimit": 20 },
+  { "id": 2, "type": "mcq", "question": "Which field contains the main recipient's email address?", "options": { "A": "CC", "B": "BCC", "C": "To", "D": "Subject" }, "correct": "C", "timeLimit": 20 },
+  { "id": 3, "type": "mcq", "question": "What is the purpose of CC in an email?", "options": { "A": "Hide recipients", "B": "Send a copy to additional people", "C": "Delete email", "D": "Add attachment" }, "correct": "B", "timeLimit": 20 },
+  { "id": 4, "type": "mcq", "question": "What does BCC mean?", "options": { "A": "Basic Carbon Copy", "B": "Blind Carbon Copy", "C": "Business Communication Copy", "D": "Backup Contact Copy" }, "correct": "B", "timeLimit": 20 },
+  { "id": 5, "type": "mcq", "question": "Which part of an email briefly explains the email purpose?", "options": { "A": "Greeting", "B": "Signature", "C": "Subject line", "D": "Attachment" }, "correct": "C", "timeLimit": 20 },
+  { "id": 6, "type": "mcq", "question": "Which is the most professional greeting?", "options": { "A": "Hey buddy", "B": "Hi bro", "C": "Dear Professor", "D": "Yo" }, "correct": "C", "timeLimit": 20 },
+  { "id": 7, "type": "mcq", "question": "What should you do before sending a professional email?", "options": { "A": "Use emojis everywhere", "B": "Check spelling and grammar", "C": "Write in capital letters", "D": "Leave the subject empty" }, "correct": "B", "timeLimit": 20 },
+  { "id": 8, "type": "mcq", "question": "Writing an email in ALL CAPITAL LETTERS usually represents:", "options": { "A": "Professional writing", "B": "Shouting or being rude", "C": "Formal greeting", "D": "Better communication" }, "correct": "B", "timeLimit": 20 },
+  { "id": 9, "type": "mcq", "question": "What is an attachment in an email?", "options": { "A": "A password", "B": "A file sent with the email", "C": "The recipient name", "D": "Email subject" }, "correct": "B", "timeLimit": 20 },
+  { "id": 10, "type": "mcq", "question": "Which is a common email mistake?", "options": { "A": "Clear subject line", "B": "Polite closing", "C": "Sending without proofreading", "D": "Professional signature" }, "correct": "C", "timeLimit": 20 },
+  { "id": 11, "type": "tf", "question": "Email etiquette helps maintain professional communication.", "options": { "True": "True", "False": "False" }, "correct": "True", "timeLimit": 15 },
+  { "id": 12, "type": "tf", "question": "The CC field is used to hide recipients from each other.", "options": { "True": "True", "False": "False" }, "correct": "False", "timeLimit": 15 },
+  { "id": 13, "type": "tf", "question": "A good email should have a clear subject line.", "options": { "True": "True", "False": "False" }, "correct": "True", "timeLimit": 15 },
+  { "id": 14, "type": "tf", "question": "Writing an email completely in capital letters is considered professional.", "options": { "True": "True", "False": "False" }, "correct": "False", "timeLimit": 15 },
+  { "id": 15, "type": "tf", "question": "BCC allows sending a copy of an email without showing the recipient list to others.", "options": { "True": "True", "False": "False" }, "correct": "True", "timeLimit": 15 },
+  { "id": 16, "type": "tf", "question": "It is okay to send a professional email without checking spelling and grammar.", "options": { "True": "True", "False": "False" }, "correct": "False", "timeLimit": 15 },
+  { "id": 17, "type": "tf", "question": "The 'To' field contains the main person who should receive the email.", "options": { "True": "True", "False": "False" }, "correct": "True", "timeLimit": 15 },
+  { "id": 18, "type": "tf", "question": "Attachments are used to send files like documents and images.", "options": { "True": "True", "False": "False" }, "correct": "True", "timeLimit": 15 },
+  { "id": 19, "type": "tf", "question": "Using slang words like 'Hey bro' is suitable when emailing a professor or company.", "options": { "True": "True", "False": "False" }, "correct": "False", "timeLimit": 15 },
+  { "id": 20, "type": "tf", "question": "A professional email should end with a polite closing and signature.", "options": { "True": "True", "False": "False" }, "correct": "True", "timeLimit": 15 }
+]
+Scoring Logic
+Base points for a correct answer: 1000.
+Time deduction: Subtract points based on how long it takes the user to answer within the 15-20 second window to calculate a speed bonus.
+Incorrect answers yield 0 points.

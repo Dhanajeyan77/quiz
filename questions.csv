@@ -1,0 +1,21 @@
+id,type,question,correct,timeLimit,A,B,C,D
+1,mcq,What is the main purpose of email etiquette?,B,20,To make emails longer,To communicate professionally and clearly,To use difficult words,To send more attachments
+2,mcq,Which field contains the main recipient's email address?,C,20,CC,BCC,To,Subject
+3,mcq,What is the purpose of CC in an email?,B,20,Hide recipients,Send a copy to additional people,Delete email,Add attachment
+4,mcq,What does BCC mean?,B,20,Basic Carbon Copy,Blind Carbon Copy,Business Communication Copy,Backup Contact Copy
+5,mcq,Which part of an email briefly explains the email purpose?,C,20,Greeting,Signature,Subject line,Attachment
+6,mcq,Which is the most professional greeting?,C,20,Hey buddy,Hi bro,Dear Professor,Yo
+7,mcq,What should you do before sending a professional email?,B,20,Use emojis everywhere,Check spelling and grammar,Write in capital letters,Leave the subject empty
+8,mcq,Writing an email in ALL CAPITAL LETTERS usually represents:,B,20,Professional writing,Shouting or being rude,Formal greeting,Better communication
+9,mcq,What is an attachment in an email?,B,20,A password,A file sent with the email,The recipient name,Email subject
+10,mcq,Which is a common email mistake?,C,20,Clear subject line,Polite closing,Sending without proofreading,Professional signature
+11,tf,Email etiquette helps maintain professional communication.,True,15,True,False,,
+12,tf,The CC field is used to hide recipients from each other.,False,15,True,False,,
+13,tf,A good email should have a clear subject line.,True,15,True,False,,
+14,tf,Writing an email completely in capital letters is considered professional.,False,15,True,False,,
+15,tf,BCC allows sending a copy of an email without showing the recipient list to others.,True,15,True,False,,
+16,tf,It is okay to send a professional email without checking spelling and grammar.,False,15,True,False,,
+17,tf,The 'To' field contains the main person who should receive the email.,True,15,True,False,,
+18,tf,Attachments are used to send files like documents and images.,True,15,True,False,,
+19,tf,Using slang words like 'Hey bro' is suitable when emailing a professor or company.,False,15,True,False,,
+20,tf,A professional email should end with a polite closing and signature.,True,15,True,False,,
