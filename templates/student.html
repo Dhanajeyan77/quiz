@@ -1,370 +1,162 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Quiz Student</title>
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Live Session</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
   <style>
     :root {
-      --bg: #09090b;
-      --panel: rgba(24, 24, 27, 0.72);
+      --bg: #000000;
+      --panel: rgba(20, 20, 25, 0.65);
       --border: rgba(255, 255, 255, 0.08);
-      --text: #f4f4f5;
+      --text: #ffffff;
       --muted: #a1a1aa;
       --accent: #3b82f6;
       --success: #10b981;
       --danger: #ef4444;
-      --warn: #f59e0b;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
-    #app {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      background:
-        radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 30%),
-        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 30%),
-        var(--bg);
-    }
-    .screen { display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center; }
-    .screen.active { display: flex; }
-    .card {
-      width: 100%;
-      max-width: 480px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    }
-    h1 { margin: 0 0 8px; font-size: 1.7rem; letter-spacing: -0.5px; }
-    h2 { margin: 0 0 18px; font-size: 1.3rem; color: var(--muted); font-weight: 500; }
-    label { display: block; margin: 14px 0 6px; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-    input[type="text"] {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-    button {
-      width: 100%;
-      padding: 15px;
-      margin-top: 18px;
-      border: none;
-      border-radius: 12px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.1s, opacity 0.2s;
-    }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-    .error { color: var(--danger); font-size: 0.9rem; margin-top: 10px; min-height: 1.2em; }
-    .score-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 18px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      color: var(--success);
-      font-weight: 700;
-      font-size: 1rem;
-    }
-    .spinner {
-      width: 56px;
-      height: 56px;
-      border: 4px solid rgba(59, 130, 246, 0.15);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .question-text {
-      font-size: 1.25rem;
-      line-height: 1.45;
-      margin-bottom: 18px;
-      text-align: center;
-    }
-    .meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-    .timer {
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-      color: var(--accent);
-    }
-    .timer.low { color: var(--danger); }
-    .options-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      width: 100%;
-    }
-    .option-btn {
-      min-height: 72px;
-      padding: 14px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      color: var(--text);
-      font-size: 0.95rem;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, transform 0.08s;
-    }
-    .option-btn:hover:not(:disabled) { background: rgba(59,130,246,0.14); border-color: var(--accent); }
-    .option-btn:active:not(:disabled) { transform: scale(0.97); }
-    .option-btn.correct { background: rgba(16,185,129,0.18); border-color: var(--success); color: var(--success); }
-    .option-btn.wrong { background: rgba(239,68,68,0.12); border-color: var(--danger); color: var(--danger); }
-    .option-btn:disabled { cursor: default; }
-    .status-msg { text-align: center; color: var(--muted); margin-top: 16px; font-size: 0.95rem; }
-    .final-score { font-size: 3rem; font-weight: 800; color: var(--success); margin: 10px 0; }
-    .muted { color: var(--muted); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; overflow: hidden; }
+    
+    /* Ambient Background Glow */
+    body::before { content: ''; position: absolute; top: -20%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%); z-index: -1; }
+    
+    .card { background: var(--panel); padding: 40px 30px; border-radius: 24px; border: 1px solid var(--border); width: 100%; max-width: 480px; text-align: center; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transition: opacity 0.3s ease; }
+    
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+    p.subtitle { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+    
+    input { width: 100%; padding: 16px 20px; margin-bottom: 16px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.5); color: white; font-size: 16px; outline: none; transition: border 0.2s; }
+    input:focus { border-color: var(--accent); }
+    
+    button.primary { width: 100%; padding: 18px; border-radius: 12px; border: none; background: #ffffff; color: #000000; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.1s, background 0.2s; }
+    button.primary:active { transform: scale(0.97); }
+    button.primary:hover { background: #e4e4e7; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 30px; }
+    .opt-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 24px 16px; border-radius: 16px; color: white; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-height: 80px; }
+    .opt-btn:active { transform: scale(0.95); }
+    .opt-btn:hover { background: rgba(255,255,255,0.08); }
+    
+    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .timer { font-size: 24px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .timer.urgent { color: var(--danger); animation: pulse 1s infinite; }
+    
+    .score-badge { display: inline-block; padding: 8px 16px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: var(--success); border-radius: 20px; font-weight: 700; font-size: 18px; margin-top: 16px; }
+    
+    .hidden { display: none !important; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    .pulse-text { animation: pulse 2s infinite; }
   </style>
 </head>
 <body>
-  <div id="app">
+  <div id="lobby" class="card">
+    <h1>Enter Session</h1>
+    <p class="subtitle">Join the live environment</p>
+    <input type="text" id="rno" placeholder="Roll Number (e.g. 22CSEC01)">
+    <input type="text" id="fname" placeholder="Full Name">
+    <button class="primary" onclick="join()">Initialize</button>
+    <p id="err" style="color: var(--danger); margin-top: 16px; font-size: 14px;"></p>
+  </div>
+  
+  <div id="wait" class="card hidden">
+    <h1 id="waitMsg" class="pulse-text" style="font-size: 22px;">Awaiting Admin Signal...</h1>
+    <p class="subtitle" style="margin-top: 8px;">Stand by for the next module</p>
+    <div class="score-badge">Points: <span id="score">0</span></div>
+  </div>
 
-    <!-- Lobby -->
-    <section id="lobby" class="screen active">
-      <div class="card">
-        <h1>Join Quiz Session</h1>
-        <h2>Enter your details</h2>
-        <label for="rollNo">Roll No</label>
-        <input type="text" id="rollNo" placeholder="e.g. 22CSEC01" autocomplete="off" />
-        <label for="fullName">Full Name</label>
-        <input type="text" id="fullName" placeholder="Your full name" autocomplete="off" />
-        <button id="joinBtn">Join Session</button>
-        <div id="lobbyError" class="error"></div>
-      </div>
-    </section>
-
-    <!-- Waiting -->
-    <section id="waiting" class="screen">
-      <div class="card" style="text-align:center;">
-        <div class="spinner"></div>
-        <h1>Waiting for Admin to start...</h1>
-        <div class="score-pill">Score: <span id="waitingScore">0</span></div>
-      </div>
-    </section>
-
-    <!-- Active Question -->
-    <section id="question" class="screen">
-      <div class="card" style="max-width: 560px;">
-        <div class="meta">
-          <span id="qCounter">Q 1/20</span>
-          <span class="timer" id="timer">20s</span>
-        </div>
-        <div id="qText" class="question-text">Question text</div>
-        <div id="optionsGrid" class="options-grid"></div>
-        <div id="questionStatus" class="status-msg"></div>
-      </div>
-    </section>
-
-    <!-- Final -->
-    <section id="final" class="screen">
-      <div class="card" style="text-align:center;">
-        <h1>Session Complete</h1>
-        <p class="muted">Your final score</p>
-        <div id="finalScore" class="final-score">0</div>
-        <p class="muted">Thanks for playing!</p>
-      </div>
-    </section>
-
+  <div id="quiz" class="card hidden" style="max-width: 600px;">
+    <div class="header-bar">
+      <span id="qnum" style="color: var(--muted); font-weight: 600;">Q 1</span>
+      <span id="timer" class="timer">20s</span>
+    </div>
+    <h2 id="qtext" style="font-size: 20px; line-height: 1.4; font-weight: 600;">Loading data...</h2>
+    <div id="opts" class="grid"></div>
+    <p id="feedback" style="margin-top:24px; color:var(--muted); font-weight: 500;"></p>
   </div>
 
   <script>
-    const socket = io();
-
-    let state = {
-      rollNo: '',
-      name: '',
-      score: 0,
-      currentQid: null,
-      answered: false,
-      timerId: null,
-      timeLeft: 0,
-    };
-
-    const $ = (id) => document.getElementById(id);
-    const show = (id) => {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      $(id).classList.add('active');
-    };
-
-    function setScore(score) {
-      state.score = score;
-      $('waitingScore').textContent = score;
-      $('finalScore').textContent = score;
-    }
+    const socket = io({ transports: ['websocket'], upgrade: false });
+    let state = { roll: '', answered: false, tid: null };
+    const $ = id => document.getElementById(id);
+    const show = id => { ['lobby','wait','quiz'].forEach(x => $(x).classList.add('hidden')); $(id).classList.remove('hidden'); };
 
     function join() {
-      const rollNo = $('rollNo').value.trim().toUpperCase();
-      const name = $('fullName').value.trim();
-      if (!rollNo || !name) {
-        $('lobbyError').textContent = 'Please enter Roll No and Full Name.';
-        return;
-      }
-      state.rollNo = rollNo;
-      state.name = name;
-      socket.emit('join_game', { roll_no: rollNo, name: name });
-      $('lobbyError').textContent = '';
+      state.roll = $('rno').value.toUpperCase().trim();
+      let n = $('fname').value.trim();
+      if(!state.roll || !n) return $('err').innerText = 'Access denied: Fill all fields';
+      socket.emit('join_game', { roll_no: state.roll, name: n });
+      $('err').innerText = '';
+      show('wait');
     }
 
-    $('joinBtn').addEventListener('click', join);
-    document.querySelectorAll('#lobby input').forEach(input => {
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
-    });
-
-    socket.on('joined', (data) => {
-      state.rollNo = data.roll_no;
-      show('waiting');
-    });
-
-    socket.on('join_error', (data) => {
-      $('lobbyError').textContent = data.message || 'Could not join.';
-    });
-
-    socket.on('receive_question', (payload) => {
-      const q = payload.question;
-      state.currentQid = q.id;
+    socket.on('receive_question', (data) => {
       state.answered = false;
-      state.timeLeft = q.timeLimit;
-
-      $('qCounter').textContent = `Q ${payload.index}/${payload.total}`;
-      $('qText').textContent = q.question;
-      $('timer').textContent = `${state.timeLeft}s`;
-      $('timer').classList.remove('low');
-      $('questionStatus').textContent = '';
-
-      const grid = $('optionsGrid');
-      grid.innerHTML = '';
-      Object.entries(q.options).forEach(([key, label]) => {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.textContent = label;
-        btn.dataset.value = key;
-        btn.addEventListener('click', () => submitAnswer(key, btn));
-        grid.appendChild(btn);
-      });
-
-      show('question');
-      startTimer(q.timeLimit);
-    });
-
-    function startTimer(seconds) {
-      if (state.timerId) clearInterval(state.timerId);
-      state.timeLeft = seconds;
-      const timerEl = $('timer');
-      state.timerId = setInterval(() => {
-        state.timeLeft -= 0.1;
-        if (state.timeLeft <= 0) {
-          state.timeLeft = 0;
-          clearInterval(state.timerId);
-          lockQuestion(true);
-        }
-        timerEl.textContent = `${Math.ceil(state.timeLeft)}s`;
-        if (state.timeLeft <= 5) timerEl.classList.add('low');
-      }, 100);
-    }
-
-    function submitAnswer(choice, btn) {
-      if (state.answered) return;
-      state.answered = true;
-      if (state.timerId) clearInterval(state.timerId);
-      socket.emit('submit_answer', { roll_no: state.rollNo, choice: choice });
-      lockQuestion(false);
-      btn.classList.add('selected');
-    }
-
-    function lockQuestion(timeout) {
-      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
-      $('questionStatus').textContent = timeout
-        ? "Time's up! Waiting for others..."
-        : "Answer submitted. Waiting for others...";
-    }
-
-    socket.on('answer_feedback', (data) => {
-      if (data.error) {
-        $('questionStatus').textContent = data.error;
-        state.answered = false;
-        document.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
-        return;
+      $('qnum').innerText = `Question ${data.index} of ${data.total}`;
+      $('qtext').innerText = data.question.question;
+      $('feedback').innerText = '';
+      
+      let grid = $('opts'); grid.innerHTML = '';
+      for (const [k, v] of Object.entries(data.question.options)) {
+        let b = document.createElement('button');
+        b.className = 'opt-btn'; b.innerText = v; // Cleaner: Just the answer text
+        b.onclick = () => {
+          if(state.answered) return;
+          state.answered = true;
+          clearInterval(state.tid);
+          socket.emit('submit_answer', { roll_no: state.roll, choice: k });
+          
+          // Lock UI state immediately
+          document.querySelectorAll('.opt-btn').forEach(btn => {
+              btn.style.opacity = '0.5'; 
+              btn.style.pointerEvents = 'none';
+          });
+          b.style.opacity = '1';
+          b.style.background = 'rgba(255,255,255,0.2)';
+          b.style.borderColor = '#ffffff';
+          
+          $('feedback').innerText = 'Data transmitted. Awaiting validation...';
+        };
+        grid.appendChild(b);
       }
-      setScore(data.score);
-      document.querySelectorAll('.option-btn').forEach(btn => {
-        btn.disabled = true;
-        if (btn.dataset.value === data.correct_choice) {
-          btn.classList.add('correct');
-        }
-      });
-      $('questionStatus').textContent = data.correct
-        ? `Correct! +${data.points} points`
-        : 'Incorrect. Waiting for next question...';
+      show('quiz');
+      
+      let t = data.question.timeLimit;
+      $('timer').innerText = t + 's';
+      $('timer').className = 'timer';
+      if(state.tid) clearInterval(state.tid);
+      state.tid = setInterval(() => {
+        t -= 1; $('timer').innerText = t + 's';
+        if (t <= 5) $('timer').classList.add('urgent');
+        if(t <= 0) { clearInterval(state.tid); if(!state.answered) $('feedback').innerText = "Time limit exceeded."; }
+      }, 1000);
     });
 
-    socket.on('show_results', (leaderboard) => {
-      const me = leaderboard.find(entry => entry.roll_no === state.rollNo);
-      if (me) setScore(me.score);
+    socket.on('answer_feedback', d => {
+      $('score').innerText = d.score;
+      $('feedback').style.color = d.correct ? 'var(--success)' : 'var(--danger)';
+      $('feedback').innerText = d.correct ? `VALIDATED: +${d.points} pts` : 'INCORRECT.';
+      $('waitMsg').innerText = "Preparing Next Module...";
+      $('waitMsg').classList.remove('pulse-text');
+      setTimeout(() => {
+          $('feedback').style.color = 'var(--muted)';
+          $('waitMsg').classList.add('pulse-text');
+          show('wait');
+      }, 2500);
     });
 
-    socket.on('game_over', (data) => {
-      if (state.timerId) clearInterval(state.timerId);
-      const me = data.students.find(s => s.roll_no === state.rollNo);
-      if (me) setScore(me.score);
-      show('final');
+    socket.on('show_results', board => {
+      let me = board.find(x => x.roll_no === state.roll);
+      if(me) $('score').innerText = me.score;
     });
 
-    socket.on('game_reset', () => {
-      state = { rollNo: '', name: '', score: 0, currentQid: null, answered: false, timerId: null, timeLeft: 0 };
-      setScore(0);
-      $('rollNo').value = '';
-      $('fullName').value = '';
-      $('lobbyError').textContent = '';
-      show('lobby');
+    socket.on('game_over', () => { 
+        $('waitMsg').innerText = "Session Terminated."; 
+        $('waitMsg').classList.remove('pulse-text');
+        show('wait'); 
     });
-
-    socket.on('connect', () => console.log('Connected'));
-    socket.on('connect_error', (err) => {
-      console.error('Connection error:', err);
-      const lobbyError = $('lobbyError');
-      if (lobbyError) lobbyError.textContent = 'Cannot connect to server. Please check your network and refresh.';
-    });
-    socket.on('disconnect', () => console.log('Disconnected'));
   </script>
 </body>
 </html>

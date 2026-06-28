@@ -1,311 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quiz Admin</title>
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
   <style>
     :root {
-      --bg: #09090b;
-      --panel: rgba(24, 24, 27, 0.72);
+      --bg: #000000;
+      --panel: rgba(15, 15, 20, 0.75);
       --border: rgba(255, 255, 255, 0.08);
-      --text: #f4f4f5;
+      --text: #ffffff;
       --muted: #a1a1aa;
-      --accent: #3b82f6;
-      --success: #10b981;
-      --danger: #ef4444;
+      --accent: #ffffff;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --red: #ef4444;
       --purple: #8b5cf6;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      padding: 40px 20px; 
       min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
     }
-    body {
-      background:
-        radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 30%),
-        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 30%),
-        var(--bg);
-      padding: 24px;
-    }
-    h1 { margin: 0 0 24px; font-size: 1.8rem; }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    @media (max-width: 860px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 22px;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-    }
-    .stat {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .stat-value {
-      font-size: 2.4rem;
-      font-weight: 800;
-      color: var(--success);
-    }
-    .stat-label { color: var(--muted); font-size: 0.95rem; }
-    .section-title {
-      margin: 0 0 14px;
-      font-size: 0.9rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-    button {
-      padding: 13px 18px;
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.08s, opacity 0.2s;
-    }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); }
-    .btn-danger { background: var(--danger); }
-    .btn-purple { background: var(--purple); }
-    .btn-muted { background: rgba(255,255,255,0.1); color: var(--text); }
-    .controls { display: flex; flex-wrap: wrap; gap: 10px; }
-    .controls button { flex: 1 1 140px; }
-    .upload-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-    input[type="file"] {
-      flex: 1;
-      padding: 10px;
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.03);
-      color: var(--muted);
-    }
-    .preview {
-      min-height: 80px;
-      padding: 14px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-    .preview small { color: var(--muted); }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-    }
-    th, td {
-      padding: 10px 8px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; }
-    tr:last-child td { border-bottom: none; }
-    .rank { font-weight: 700; color: var(--accent); }
-    .score { font-weight: 700; color: var(--success); }
-    .toast {
+    
+    /* Ambient Background Glow */
+    body::before {
+      content: '';
       position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 14px 20px;
-      border-radius: 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--text);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-      transform: translateX(140%);
-      transition: transform 0.3s ease;
-      z-index: 1000;
+      top: -20%; left: -10%;
+      width: 50vw; height: 50vw;
+      background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+      z-index: -1;
     }
-    .toast.show { transform: translateX(0); }
-    .empty { color: var(--muted); font-size: 0.9rem; }
+    
+    .container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      display: grid; 
+      grid-template-columns: 380px 1fr; 
+      gap: 32px; 
+    }
+    
+    @media (max-width: 900px) { 
+      .container { grid-template-columns: 1fr; } 
+    }
+    
+    .panel { 
+      background: var(--panel); 
+      padding: 32px; 
+      border-radius: 24px; 
+      border: 1px solid var(--border); 
+      backdrop-filter: blur(24px); 
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.5px; }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    h2 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin: 0; }
+    
+    .tracker-badge {
+      background: rgba(59,130,246,0.15);
+      color: var(--blue);
+      border: 1px solid rgba(59,130,246,0.3);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      transition: all 0.3s ease;
+    }
+    
+    .stat-box { 
+      background: rgba(255,255,255,0.02); 
+      border: 1px solid var(--border); 
+      padding: 32px 24px; 
+      border-radius: 20px; 
+      text-align: center; 
+      margin-bottom: 32px; 
+    }
+    
+    .stat-num { font-size: 56px; font-weight: 800; color: var(--green); line-height: 1; letter-spacing: -2px; }
+    .stat-label { color: var(--muted); font-size: 12px; margin-top: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    
+    button { 
+      width: 100%; 
+      padding: 18px; 
+      border: none; 
+      border-radius: 14px; 
+      color: #000; 
+      background: var(--accent); 
+      cursor: pointer; 
+      font-weight: 700; 
+      font-size: 15px; 
+      margin-bottom: 12px; 
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    
+    button:active { transform: scale(0.97); }
+    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    
+    .btn-secondary { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .btn-danger { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+    .btn-danger:hover { background: var(--red); color: white; }
+    .btn-purple { background: var(--purple); color: white; }
+    
+    .file-upload-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    
+    input[type="file"] { 
+      width: 100%; 
+      padding: 16px; 
+      background: rgba(255,255,255,0.02); 
+      border-radius: 14px; 
+      color: var(--muted); 
+      border: 1px dashed var(--border); 
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    input[type="file"]:hover { border-color: var(--blue); }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { text-align: left; padding: 16px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 15px; font-weight: 500; transition: background 0.2s; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    
+    .rank-cell { color: var(--muted); font-weight: 600; }
+    .score-cell { color: var(--green); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+    
+    .top-three { background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, transparent 100%); }
+    
+    /* Toast Notification */
+    #toast {
+      position: fixed; top: 24px; right: 24px; background: var(--panel); border: 1px solid var(--border); padding: 16px 24px; border-radius: 12px; color: white; font-weight: 500; font-size: 14px; backdrop-filter: blur(12px); transform: translateX(150%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    #toast.show { transform: translateX(0); }
   </style>
 </head>
 <body>
-  <div style="max-width:1200px;margin:0 auto;">
-    <h1>Admin Dashboard</h1>
-  </div>
+  <div id="toast">Notification</div>
 
-  <div class="grid">
-
-    <!-- Control Panel -->
-    <div class="card">
-      <div class="stat">
-        <div>
-          <div class="stat-label">Connected Students</div>
-          <div class="stat-value" id="connectedCount">0</div>
-        </div>
+  <div class="container">
+    
+    <div class="panel">
+      <h1>Command Center</h1>
+      
+      <div class="stat-box">
+        <div class="stat-num" id="count">0</div>
+        <div class="stat-label">Active Connections</div>
       </div>
-
-      <div class="section-title">Question Data</div>
-      <div class="upload-row">
-        <input type="file" id="csvInput" accept=".csv" />
-        <button class="btn-muted" id="uploadBtn">Load CSV</button>
+      
+      <div class="section-header">
+        <h2>1. Ingestion</h2>
       </div>
-
-      <div class="section-title">Game Controls</div>
-      <div class="controls">
-        <button class="btn-primary" id="nextBtn">Next Question</button>
-        <button class="btn-muted" id="leaderBtn">Show Leaderboard</button>
-        <button class="btn-danger" id="endBtn">End Game & Save to DB</button>
-        <button class="btn-purple" id="downloadBtn">Download CSV Report</button>
-        <button class="btn-muted" id="resetBtn">Reset Game</button>
+      <div class="file-upload-wrapper">
+        <input type="file" id="csvfile" accept=".csv">
       </div>
-    </div>
-
-    <!-- Current Question Preview -->
-    <div class="card">
-      <div class="section-title">Current Question</div>
-      <div class="preview" id="questionPreview">
-        <small>No question active. Click "Next Question" to begin.</small>
+      <button class="btn-secondary" onclick="upload()">Load Data Matrix</button>
+      <p id="msg" style="color:var(--muted); font-size: 13px; margin: 8px 0 32px 0; text-align: center; font-weight: 500;"></p>
+      
+      <div class="section-header">
+        <h2>2. Execution</h2>
+        <span id="qTracker" class="tracker-badge">0 / 0</span>
+      </div>
+      <button onclick="socket.emit('admin_next_question')">Deploy Next Module</button>
+      <button class="btn-secondary" onclick="socket.emit('admin_show_leaderboard')">Sync Standings</button>
+      
+      <div style="margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border);">
+        <button class="btn-danger" onclick="endGame()">Terminate & Save Data</button>
+        <button class="btn-purple" onclick="window.location.href='/download-report'">Extract CSV Report</button>
       </div>
     </div>
 
-    <!-- Live Leaderboard -->
-    <div class="card" style="grid-column: 1 / -1;">
-      <div class="section-title">Live Leaderboard</div>
+    <div class="panel">
+      <h1>Global Rankings</h1>
       <table>
         <thead>
-          <tr><th>Rank</th><th>Roll No</th><th>Name</th><th>Score</th></tr>
+          <tr>
+            <th>Rank</th>
+            <th>Identifier</th>
+            <th>Operator</th>
+            <th style="text-align: right;">Yield</th>
+          </tr>
         </thead>
-        <tbody id="leaderboardBody">
-          <tr><td colspan="4" class="empty">No students connected yet.</td></tr>
+        <tbody id="board">
+          <tr><td colspan="4" style="text-align: center; color: var(--muted); padding: 60px 20px; font-size: 14px;">Awaiting incoming telemetry...</td></tr>
         </tbody>
       </table>
     </div>
-
+    
   </div>
 
-  <div id="toast" class="toast"></div>
-
   <script>
-    const socket = io();
-    const $ = (id) => document.getElementById(id);
-
-    function showToast(message, type = 'info') {
-      const toast = $('toast');
-      toast.textContent = message;
+    const socket = io({ transports: ['websocket'], upgrade: false });
+    
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.borderColor = isSuccess ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+      toast.style.color = isSuccess ? '#10b981' : '#ef4444';
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
-
-    function updateCount(count) {
-      $('connectedCount').textContent = count;
-    }
-
-    function renderLeaderboard(data) {
-      const tbody = $('leaderboardBody');
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty">No students connected yet.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.map(entry => `
-        <tr>
-          <td class="rank">#${entry.rank}</td>
-          <td>${entry.roll_no}</td>
-          <td>${entry.name}</td>
-          <td class="score">${entry.score}</td>
-        </tr>
-      `).join('');
-    }
-
-    function renderPreview(payload) {
-      const q = payload.question;
-      const options = Object.entries(q.options).map(([k, v]) => `<div><strong>${k}.</strong> ${v}</div>`).join('');
-      $('questionPreview').innerHTML = `
-        <div><strong>Q${payload.index}/${payload.total}</strong> ${q.question}</div>
-        <div style="margin-top:10px;color:var(--muted);font-size:0.9rem;">${options}</div>
-        <div style="margin-top:10px;color:var(--success);font-size:0.85rem;">Correct: ${q.correct}</div>
-      `;
-    }
-
-    $('uploadBtn').addEventListener('click', async () => {
-      const input = $('csvInput');
-      if (!input.files.length) {
-        showToast('Please choose a CSV file.');
-        return;
-      }
-      const form = new FormData();
-      form.append('questions_file', input.files[0]);
+    
+    async function upload() {
+      let f = document.getElementById('csvfile').files[0];
+      if(!f) return showToast("Select a CSV matrix first.", false);
+      
+      document.getElementById('msg').innerText = "Processing...";
+      let form = new FormData(); form.append('file', f);
+      
       try {
-        const res = await fetch('/upload-csv', { method: 'POST', body: form });
-        const json = await res.json();
-        if (json.success) {
-          showToast(`Loaded ${json.count} questions.`);
-          $('questionPreview').innerHTML = '<small>New CSV loaded. Click "Next Question" to begin.</small>';
+        let r = await fetch('/upload-csv', { method: 'POST', body: form });
+        let res = await r.json();
+        
+        if(res.success) {
+            document.getElementById('msg').innerText = `Ready: ${res.count} modules loaded.`;
+            document.getElementById('qTracker').innerText = `0 / ${res.count}`;
+            document.getElementById('qTracker').style.color = 'var(--blue)';
+            document.getElementById('qTracker').style.background = 'rgba(59,130,246,0.15)';
+            document.getElementById('qTracker').style.borderColor = 'rgba(59,130,246,0.3)';
+            showToast("Matrix loaded successfully.");
         } else {
-          showToast(json.error || 'Upload failed.');
+            document.getElementById('msg').innerText = `ERR: ${res.error}`;
+            showToast("Failed to load matrix.", false);
         }
-      } catch (e) {
-        showToast('Upload error: ' + e.message);
+      } catch (err) {
+        document.getElementById('msg').innerText = `Network Error`;
+        showToast("Connection failed.", false);
+      }
+    }
+
+    function endGame() {
+      if(confirm('WARNING: Lock all scores and write to permanent PostgreSQL storage?')) {
+          socket.emit('admin_end_game');
+          showToast("Session terminated. Saving to DB...");
+      }
+    }
+
+    socket.on('update_lobby', d => {
+        document.getElementById('count').innerText = d.count;
+    });
+    
+    // TRACKER LOGIC ADDED HERE
+    socket.on('receive_question', (data) => {
+      const tracker = document.getElementById('qTracker');
+      tracker.innerText = `${data.index} / ${data.total}`;
+      
+      // Visual cue when hitting the final question
+      if(data.index === data.total) {
+          tracker.style.color = 'var(--green)';
+          tracker.style.background = 'rgba(16,185,129,0.15)';
+          tracker.style.borderColor = 'rgba(16,185,129,0.3)';
+      } else {
+          tracker.style.color = 'var(--blue)';
+          tracker.style.background = 'rgba(59,130,246,0.15)';
+          tracker.style.borderColor = 'rgba(59,130,246,0.3)';
       }
     });
-
-    $('nextBtn').addEventListener('click', () => {
-      socket.emit('admin_next_question');
+    
+    socket.on('show_results', data => {
+      if (data.length === 0) return;
+      let h = '';
+      data.forEach((x, i) => { 
+          let rowClass = i < 3 ? 'class="top-three"' : '';
+          let medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : '';
+          h += `<tr ${rowClass}>
+                  <td class="rank-cell">${medal}#${x.rank}</td>
+                  <td style="color: rgba(255,255,255,0.7);">${x.roll_no}</td>
+                  <td style="font-weight: 600;">${x.name}</td>
+                  <td class="score-cell">${x.score}</td>
+                </tr>`; 
+      });
+      document.getElementById('board').innerHTML = h;
     });
-
-    $('leaderBtn').addEventListener('click', () => {
-      socket.emit('admin_show_leaderboard');
-    });
-
-    $('endBtn').addEventListener('click', () => {
-      if (confirm('End the game and save results to the database?')) {
-        socket.emit('admin_end_game');
-      }
-    });
-
-    $('downloadBtn').addEventListener('click', () => {
-      window.location.href = '/download-report';
-    });
-
-    $('resetBtn').addEventListener('click', () => {
-      if (confirm('Reset all game state?')) {
-        socket.emit('admin_reset_game');
-      }
-    });
-
-    socket.on('connect', () => console.log('Admin connected'));
-    socket.on('connect_error', (err) => {
-      console.error('Admin connection error:', err);
-      showToast('Cannot connect to server. Check console.');
-    });
-    socket.on('state_sync', (state) => updateCount(state.connected_count));
-    socket.on('update_lobby', (data) => updateCount(data.count));
-    socket.on('admin_question_preview', (payload) => renderPreview(payload));
-    socket.on('show_results', (data) => renderLeaderboard(data));
-    socket.on('game_over', () => showToast('Game ended. Results saved.'));
-    socket.on('game_reset', () => {
-      showToast('Game reset.');
-      $('questionPreview').innerHTML = '<small>No question active. Click "Next Question" to begin.</small>';
-      renderLeaderboard([]);
-      updateCount(0);
-    });
-    socket.on('admin_error', (data) => showToast(data.message));
   </script>
 </body>
 </html>
