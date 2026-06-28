@@ -5,7 +5,7 @@ import csv
 import io
 import eventlet
 # Crucial for Linux/WSL to prevent WebSockets from freezing
-eventlet.monkey_patch() 
+eventlet.monkey_patch()
 
 from collections import OrderedDict
 from datetime import datetime
@@ -16,7 +16,7 @@ from flask_socketio import SocketIO, emit
 # 1. SERVER CONFIGURATION
 # ==========================================
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'super-secret-key'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super-secret-key')
 # Forcing eventlet guarantees the real-time sockets won't hang
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
@@ -88,7 +88,8 @@ def ping():
 @app.route('/upload-csv', methods=['POST'])
 def upload_csv():
     file = request.files.get('file')
-    if not file: return {'success': False, 'error': 'No file'}, 400
+    if not file:
+        return {'success': False, 'error': 'No file'}, 400
     try:
         stream = io.StringIO(file.read().decode('utf-8'), newline=None)
         reader = csv.DictReader(stream)
@@ -97,16 +98,19 @@ def upload_csv():
             q = {
                 'id': int(row['id']),
                 'question': row['question'].strip(),
-                'options': {k: row[k] for k in ['A','B','C','D'] if row.get(k)},
+                'options': {k: row[k] for k in ['A', 'B', 'C', 'D'] if row.get(k)},
                 'correct': row['correct'].strip(),
                 'timeLimit': int(row.get('timeLimit', 20))
             }
             questions.append(q)
         quiz_state['questions'] = questions
         quiz_state['current_index'] = -1
+        quiz_state['session_complete'] = False
+        quiz_state['active_question'] = None
+        quiz_state['answers_locked'].clear()
         return {'success': True, 'count': len(questions)}
     except Exception as e:
-        return {'success': False, 'error': str(e)}
+        return {'success': False, 'error': str(e)}, 400
 
 @app.route('/download-report')
 def download_report():
@@ -116,7 +120,8 @@ def download_report():
         headers = ['Roll No', 'Name', 'Total Score'] + [f"Q{q['id']}" for q in quiz_state['questions']]
         writer.writerow(headers)
         yield output.getvalue()
-        output.seek(0); output.truncate(0)
+        output.seek(0)
+        output.truncate(0)
 
         for rno, data in quiz_state['students'].items():
             ans_map = {a['q_id']: a for a in data.get('answers', [])}
@@ -126,141 +131,128 @@ def download_report():
                 row.append(f"{a['points']}pts" if a and a['correct'] else "0pts")
             writer.writerow(row)
             yield output.getvalue()
-            output.seek(0); output.truncate(0)
+            output.seek(0)
+            output.truncate(0)
 
-    return Response(generate(), mimetype='text/csv', headers={"Content-Disposition": "attachment; filename=results.csv"})
+    return Response(
+        generate(),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment; filename=results.csv"}
+    )
 
 # ==========================================
 # 6. WEBSOCKET LOGIC
 # ==========================================
 @socketio.on('join_game')
 def handle_join(data):
-    rno, name = data['roll_no'], data['name']
+    rno, name = data.get('roll_no', '').strip(), data.get('name', '').strip()
+    if not rno or not name:
+        emit('error', {'message': 'Roll number and name are required'})
+        return
     if rno not in quiz_state['students']:
         quiz_state['students'][rno] = {'name': name, 'score': 0, 'answers': []}
-    
+
     emit('update_lobby', {'count': len(quiz_state['students'])}, broadcast=True)
+
 
 @socketio.on('admin_next_question')
 def next_question():
+    if quiz_state['session_complete']:
+        return
+
     quiz_state['current_index'] += 1
-    if quiz_state['current_index'] >= len(quiz_state['questions']): return
-    
+    if quiz_state['current_index'] >= len(quiz_state['questions']):
+        return
+
     q = quiz_state['questions'][quiz_state['current_index']]
     quiz_state['active_question'] = q
     quiz_state['start_time'] = time.time()
-    
+
     client_q = {k: v for k, v in q.items() if k != 'correct'}
-    socketio.emit('receive_question', {'question': client_q, 'index': quiz_state['current_index'] + 1, 'total': len(quiz_state['questions'])})
+    socketio.emit('receive_question', {
+        'question': client_q,
+        'index': quiz_state['current_index'] + 1,
+        'total': len(quiz_state['questions'])
+    })
+
+    # ⏱️ Start the Auto-Advance Timer (Time Limit + 3 seconds for students to read scores)
+    socketio.start_background_task(auto_advance, quiz_state['current_index'], q.get('timeLimit', 20))
+
+
+def auto_advance(target_index, time_limit):
+    """Waits in the background, then pushes the next question automatically."""
+    eventlet.sleep(time_limit + 3)
+
+    # Check if the game is still active and we haven't already skipped ahead
+    if quiz_state['current_index'] == target_index and not quiz_state['session_complete']:
+        if quiz_state['current_index'] + 1 >= len(quiz_state['questions']):
+            end_game()  # Auto-terminate and save if it was the last question
+        else:
+            next_question()  # Deploy the next question automatically
+
 
 @socketio.on('submit_answer')
 def handle_answer(data):
-    rno, choice = data['roll_no'], data['choice']
+    rno, choice = data.get('roll_no'), data.get('choice')
     q = quiz_state['active_question']
-    if not q or (rno, q['id']) in quiz_state['answers_locked']: return
+    if not q or not rno or (rno, q['id']) in quiz_state['answers_locked']:
+        return
 
     quiz_state['answers_locked'].add((rno, q['id']))
     time_taken = time.time() - quiz_state['start_time']
-    
+
     is_correct = (choice == q['correct'])
+    # Award points based on speed
     pts = max(0, int(1000 - (time_taken * (1000 / q.get('timeLimit', 20))))) if is_correct else 0
-    
-    quiz_state['students'][rno]['score'] += pts
-    quiz_state['students'][rno]['answers'].append({'q_id': q['id'], 'correct': is_correct, 'points': pts})
-    
-    emit('answer_feedback', {'correct': is_correct, 'points': pts, 'score': quiz_state['students'][rno]['score']})
+
+    student = quiz_state['students'].get(rno)
+    if not student:
+        return
+
+    student['score'] += pts
+    student['answers'].append({'q_id': q['id'], 'correct': is_correct, 'points': pts})
+
+    # This sends the specific feedback to the student who answered
+    emit('answer_feedback', {
+        'correct': is_correct,
+        'points': pts,
+        'score': student['score']
+    })
+
+    # Refresh the live leaderboard for the admin view
     admin_show_leaderboard()
+
 
 @socketio.on('admin_show_leaderboard')
 def admin_show_leaderboard():
     board = sorted(quiz_state['students'].items(), key=lambda x: x[1]['score'], reverse=True)
-    payload = [{'rank': i+1, 'roll_no': r, 'name': d['name'], 'score': d['score']} for i, (r, d) in enumerate(board)]
+    payload = [{'rank': i + 1, 'roll_no': r, 'name': d['name'], 'score': d['score']} for i, (r, d) in enumerate(board)]
     socketio.emit('show_results', payload)
 
+
 @socketio.on('admin_end_game')
 def end_game():
+    quiz_state['session_complete'] = True  # Locks the game to prevent auto-advancing
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         for rno, d in quiz_state['students'].items():
-            cur.execute('INSERT INTO quiz_results (roll_no, name, total_score, answers_json) VALUES (%s, %s, %s, %s)', 
-                        (rno, d['name'], d['score'], json.dumps(d['answers'])))
+            cur.execute(
+                'INSERT INTO quiz_results (roll_no, name, total_score, answers_json) VALUES (%s, %s, %s, %s)',
+                (rno, d['name'], d['score'], json.dumps(d['answers']))
+            )
         conn.commit()
-        cur.close(); conn.close()
-    except Exception as e: print("DB Save Error:", e)
-    socketio.emit('game_over')
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print("DB Save Error:", e)
 
-if __name__ == '__main__':
-    # Binds directly to the exact port. Access via http://127.0.0.1:5001
-    socketio.run(app, host='0.0.0.0', port=5002, debug=False
-
-
-    @socketio.on('submit_answer')
-def handle_answer(data):
-    rno, choice = data['roll_no'], data['choice']
-    q = quiz_state['active_question']
-    if not q or (rno, q['id']) in quiz_state['answers_locked']: return
-
-    quiz_state['answers_locked'].add((rno, q['id']))
-    time_taken = time.time() - quiz_state['start_time']
-    
-    is_correct = (choice == q['correct'])
-    # Award points based on speed
-    pts = max(0, int(1000 - (time_taken * (1000 / q.get('timeLimit', 20))))) if is_correct else 0
-    
-    quiz_state['students'][rno]['score'] += pts
-    quiz_state['students'][rno]['answers'].append({'q_id': q['id'], 'correct': is_correct, 'points': pts})
-    
-    # This sends the specific feedback to the student who answered
-    emit('answer_feedback', {
-        'correct': is_correct, 
-        'points': pts, 
-        'score': quiz_state['students'][rno]['score']
-    })
-
-
-    @socketio.on('admin_next_question')
-def next_question():
-    if quiz_state['session_complete']: return
-    
-    quiz_state['current_index'] += 1
-    if quiz_state['current_index'] >= len(quiz_state['questions']): return
-    
-    q = quiz_state['questions'][quiz_state['current_index']]
-    quiz_state['active_question'] = q
-    quiz_state['start_time'] = time.time()
-    
-    client_q = {k: v for k, v in q.items() if k != 'correct'}
-    socketio.emit('receive_question', {'question': client_q, 'index': quiz_state['current_index'] + 1, 'total': len(quiz_state['questions'])})
-    
-    # ⏱️ Start the Auto-Advance Timer (Time Limit + 3 seconds for students to read scores)
-    socketio.start_background_task(auto_advance, quiz_state['current_index'], q.get('timeLimit', 20))
-
-def auto_advance(target_index, time_limit):
-    """Waits in the background, then pushes the next question automatically."""
-    eventlet.sleep(time_limit + 3) 
-    
-    # Check if the game is still active and we haven't already skipped ahead
-    if quiz_state['current_index'] == target_index and not quiz_state['session_complete']:
-        if quiz_state['current_index'] + 1 >= len(quiz_state['questions']):
-            end_game() # Auto-terminate and save if it was the last question
-        else:
-            next_question() # Deploy the next question automatically
-
-@socketio.on('admin_end_game')
-def end_game():
-    quiz_state['session_complete'] = True # Locks the game to prevent auto-advancing
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        for rno, d in quiz_state['students'].items():
-            cur.execute('INSERT INTO quiz_results (roll_no, name, total_score, answers_json) VALUES (%s, %s, %s, %s)', 
-                        (rno, d['name'], d['score'], json.dumps(d['answers'])))
-        conn.commit()
-        cur.close(); conn.close()
-    except Exception as e: print("DB Save Error:", e)
-    
     # 🏆 Broadcast the Final Leaderboard to ALL Students
     board = sorted(quiz_state['students'].items(), key=lambda x: x[1]['score'], reverse=True)
-    payload = [{'rank': i+1, 'roll_no': r, 'name': d['name'], 'score': d['score']} for i, (r, d) in enumerate(board)]
+    payload = [{'rank': i + 1, 'roll_no': r, 'name': d['name'], 'score': d['score']} for i, (r, d) in enumerate(board)]
     socketio.emit('game_over', {'leaderboard': payload})
+
+
+if __name__ == '__main__':
+    # Binds directly to the exact port. Access via http://127.0.0.1:5002
+    socketio.run(app, host='0.0.0.0', port=5002, debug=False)
