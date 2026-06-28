@@ -85,32 +85,35 @@ def admin_view():
 def ping():
     return "<h1>Server is successfully running!</h1>"
 
+
 @app.route('/upload-csv', methods=['POST'])
 def upload_csv():
     file = request.files.get('file')
-    if not file:
-        return {'success': False, 'error': 'No file'}, 400
+    if not file: return {'success': False, 'error': 'No file'}, 400
     try:
         stream = io.StringIO(file.read().decode('utf-8'), newline=None)
         reader = csv.DictReader(stream)
         questions = []
         for row in reader:
+            # Detect options based on type
+            if row['type'] == 'mcq':
+                options = {k: row[k] for k in ['A','B','C','D'] if row.get(k)}
+            else: # tf type
+                options = {'A': 'True', 'B': 'False'}
+            
             q = {
                 'id': int(row['id']),
                 'question': row['question'].strip(),
-                'options': {k: row[k] for k in ['A', 'B', 'C', 'D'] if row.get(k)},
-                'correct': row['correct'].strip(),
+                'options': options,
+                'correct': row['correct'].strip().upper(), # Normalize to Upper
                 'timeLimit': int(row.get('timeLimit', 20))
             }
             questions.append(q)
         quiz_state['questions'] = questions
         quiz_state['current_index'] = -1
-        quiz_state['session_complete'] = False
-        quiz_state['active_question'] = None
-        quiz_state['answers_locked'].clear()
         return {'success': True, 'count': len(questions)}
     except Exception as e:
-        return {'success': False, 'error': str(e)}, 400
+        return {'success': False, 'error': str(e)}
 
 @app.route('/download-report')
 def download_report():
@@ -145,14 +148,25 @@ def download_report():
 # ==========================================
 @socketio.on('join_game')
 def handle_join(data):
-    rno, name = data.get('roll_no', '').strip(), data.get('name', '').strip()
-    if not rno or not name:
-        emit('error', {'message': 'Roll number and name are required'})
-        return
-    if rno not in quiz_state['students']:
+    rno, name = data['roll_no'], data['name']
+    
+    # If they are already in the list, just update their status
+    if rno in quiz_state['students']:
+        print(f"Student {rno} re-joined.")
+    else:
         quiz_state['students'][rno] = {'name': name, 'score': 0, 'answers': []}
-
+    
     emit('update_lobby', {'count': len(quiz_state['students'])}, broadcast=True)
+    
+    # If the game is currently active, push the current question to them immediately!
+    if quiz_state['active_question']:
+        q = quiz_state['active_question']
+        client_q = {k: v for k, v in q.items() if k != 'correct'}
+        emit('receive_question', {
+            'question': client_q, 
+            'index': quiz_state['current_index'] + 1, 
+            'total': len(quiz_state['questions'])
+        })
 
 
 @socketio.on('admin_next_question')
@@ -193,35 +207,56 @@ def auto_advance(target_index, time_limit):
 
 @socketio.on('submit_answer')
 def handle_answer(data):
-    rno, choice = data.get('roll_no'), data.get('choice')
-    q = quiz_state['active_question']
-    if not q or not rno or (rno, q['id']) in quiz_state['answers_locked']:
+    # 1. Extract and Validate
+    rno = data.get('roll_no')
+    choice = str(data.get('choice', '')).strip().upper()
+    q = quiz_state.get('active_question')
+    
+    if not rno or not q or (rno, q['id']) in quiz_state['answers_locked']:
         return
 
+    # 2. Lock the answer to prevent double-submissions
     quiz_state['answers_locked'].add((rno, q['id']))
+    
+    # 3. Normalize Correct Answer
+    # We strip and upper the CSV value
+    correct_ans = str(q['correct']).strip().upper()
+    
+    # Map TF labels to A/B if the CSV uses words instead of keys
+    if correct_ans == 'TRUE': correct_ans = 'A'
+    if correct_ans == 'FALSE': correct_ans = 'B'
+    
+    # 4. Scoring Logic
     time_taken = time.time() - quiz_state['start_time']
-
-    is_correct = (choice == q['correct'])
-    # Award points based on speed
-    pts = max(0, int(1000 - (time_taken * (1000 / q.get('timeLimit', 20))))) if is_correct else 0
-
-    student = quiz_state['students'].get(rno)
-    if not student:
-        return
-
-    student['score'] += pts
-    student['answers'].append({'q_id': q['id'], 'correct': is_correct, 'points': pts})
-
-    # This sends the specific feedback to the student who answered
+    is_correct = (choice == correct_ans)
+    
+    # Award points: 1000 max, decaying by speed
+    # We give 0 if they were too slow (time_taken > timeLimit)
+    time_limit = q.get('timeLimit', 20)
+    if time_taken > time_limit:
+        pts = 0
+    else:
+        pts = int(1000 - (time_taken * (1000 / time_limit))) if is_correct else 0
+    
+    # 5. Update State
+    if rno in quiz_state['students']:
+        quiz_state['students'][rno]['score'] += pts
+        quiz_state['students'][rno]['answers'].append({
+            'q_id': q['id'], 
+            'correct': is_correct, 
+            'points': pts
+        })
+    
+    # 6. Push Feedback
+    # This specifically targets the student who just answered
     emit('answer_feedback', {
-        'correct': is_correct,
-        'points': pts,
-        'score': student['score']
+        'correct': is_correct, 
+        'points': pts, 
+        'score': quiz_state['students'][rno]['score'] if rno in quiz_state['students'] else 0
     })
-
-    # Refresh the live leaderboard for the admin view
+    
+    # Optional: Update Admin Leaderboard in real-time
     admin_show_leaderboard()
-
 
 @socketio.on('admin_show_leaderboard')
 def admin_show_leaderboard():

@@ -144,6 +144,28 @@
         $('waitMsg').innerHTML = h;
         show('wait');
     });
+
+    // Add these listeners to your script
+    socket.on('disconnect', () => {
+    // Show a "Reconnecting" overlay so they know it's a network issue
+      const overlay = document.createElement('div');
+      overlay.id = 'reconnectOverlay';
+      overlay.style = 'position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;';
+      overlay.innerText = 'Connection Lost. Reconnecting...';
+      document.body.appendChild(overlay);
+    });
+
+    socket.on('connect', () => {
+    // Remove the overlay once the WebSocket is back up
+      const overlay = document.getElementById('reconnectOverlay');
+      if (overlay) overlay.remove();
+    });
+
+
+
+
+
+
   </script>
 </body>
 </html>
